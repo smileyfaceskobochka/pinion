@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, type FormEvent } from "react";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../lib/api";
 
@@ -24,7 +24,7 @@ function AuthComponent() {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e: Event) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
@@ -80,7 +80,7 @@ function AuthComponent() {
                 <input
                   type="text"
                   value={username}
-                  onInput={(e) => setUsername(e.currentTarget.value)}
+                  onChange={(e) => setUsername(e.currentTarget.value)}
                   placeholder="admin"
                   className="input-field"
                   required
@@ -93,7 +93,7 @@ function AuthComponent() {
               <input
                 type="email"
                 value={email}
-                onInput={(e) => setEmail(e.currentTarget.value)}
+                onChange={(e) => setEmail(e.currentTarget.value)}
                 placeholder="admin@pinion.local"
                 className="input-field"
                 required
@@ -105,7 +105,7 @@ function AuthComponent() {
               <input
                 type="password"
                 value={password}
-                onInput={(e) => setPassword(e.currentTarget.value)}
+                onChange={(e) => setPassword(e.currentTarget.value)}
                 placeholder="••••••••••••"
                 className="input-field"
                 required

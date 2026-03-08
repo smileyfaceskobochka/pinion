@@ -1,6 +1,4 @@
-import { createContext } from "preact";
-import { useContext, useState, useCallback } from "preact/hooks";
-import { type ComponentChildren } from "preact";
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
 interface User {
   id: string;
@@ -19,7 +17,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ComponentChildren }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
@@ -33,7 +31,7 @@ export function AuthProvider({ children }: { children: ComponentChildren }) {
     setUser(null);
   }, []);
 
-  // For development convenience, we could optionally recover from 
+  // For development convenience, we could optionally recover from
   // session storage, but the plan says memory-only to be strict.
   // We'll stick to memory-only as per instructions.
 
