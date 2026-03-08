@@ -19,55 +19,49 @@ function RootLayout() {
   const { isAuthenticated, logout, user } = useAuth();
 
   return (
-    <div className="min-h-screen text-white flex flex-col font-sans selection:bg-brand/30 selection:text-white antialiased">
-      {/* High-Contrast Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-black border-b border-border-subtle h-16 flex items-center justify-between px-6 lg:px-10">
-        <div className="flex items-center gap-10">
-          <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-            <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center font-black text-white text-sm">
-              P
-            </div>
-            <span className="text-lg font-extrabold tracking-tighter font-display uppercase">
-              Pinion
-            </span>
-          </Link>
+    <div className="min-h-screen text-white flex flex-col font-sans bg-bg-main">
+      <nav className="sticky top-0 z-50 h-16 border-b border-border-subtle bg-bg-main/95 backdrop-blur">
+        <div className="max-w-[1200px] mx-auto h-full px-4 md:px-6 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+              <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center font-black text-white text-sm">P</div>
+              <span className="text-base font-bold tracking-tight font-display uppercase">Pinion</span>
+            </Link>
 
-          {isAuthenticated && (
-            <div className="hidden md:flex gap-6 items-center text-[13px] font-semibold text-text-secondary">
-              <NavLink to="/servers" label="Servers" />
-              <div className="w-px h-3 bg-border-subtle" />
-              <NavLink to="/admin/nodes" label="Nodes" />
-              <NavLink to="/admin/eggs" label="Eggs" />
-              <NavLink to="/admin/users" label="Users" />
-            </div>
-          )}
-        </div>
+            {isAuthenticated && (
+              <div className="hidden md:flex items-center gap-1 text-sm text-text-secondary">
+                <NavLink to="/servers" label="Servers" />
+                <NavLink to="/admin/nodes" label="Nodes" />
+                <NavLink to="/admin/eggs" label="Eggs" />
+                <NavLink to="/admin/users" label="Users" />
+              </div>
+            )}
+          </div>
 
-        <div className="flex items-center gap-6">
           {isAuthenticated ? (
-            <div className="flex items-center gap-4 border-l border-border-subtle pl-6">
-              <div className="flex flex-col items-end">
-                <span className="text-sm font-bold leading-tight">{user?.username}</span>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-sm font-semibold text-text-secondary">{user?.username}</span>
                 <button
                   onClick={logout}
-                  className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary hover:text-red-400 transition-colors"
+                  className="text-[11px] text-text-tertiary hover:text-red-400 transition-colors"
                 >
-                  Sign Out
+                  Sign out
                 </button>
               </div>
-              <div className="w-9 h-9 rounded-full bg-neutral-900 border border-border-strong flex items-center justify-center font-bold text-xs text-text-secondary">
+              <div className="w-9 h-9 rounded-full bg-bg-card border border-border-subtle flex items-center justify-center text-xs font-semibold text-text-secondary">
                 {user?.username[0].toUpperCase()}
               </div>
             </div>
           ) : (
-            <Link to="/auth" className="btn-brand px-4 py-2 text-xs uppercase tracking-widest font-bold">
+            <Link to="/auth" className="btn-brand px-4 py-2 text-xs uppercase tracking-wide">
               Sign In
             </Link>
           )}
         </div>
       </nav>
 
-      <main className="flex-1 p-6 lg:p-12 max-w-[1400px] mx-auto w-full animate-in fade-in duration-700">
+      <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 md:px-6 py-6 md:py-8">
         <Outlet />
       </main>
 
@@ -80,12 +74,10 @@ function NavLink({ to, label }: { to: string; label: string }) {
   return (
     <Link
       to={to}
-      className="hover:text-white transition-all duration-200 relative py-1.5"
-      activeProps={{ className: "!text-brand" }}
+      className="px-3 py-1.5 rounded-md hover:text-white hover:bg-white/5 transition-colors"
+      activeProps={{ className: "text-white bg-white/10" }}
     >
       {label}
-      <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-brand rounded-full transition-all duration-200 group-hover:w-full" />
-      {/* Active Indicator is handled by TanStack Router activeProps styling above */}
     </Link>
   );
 }
