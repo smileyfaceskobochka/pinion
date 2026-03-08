@@ -56,21 +56,34 @@ impl UserRepo {
     })
   }
 
+  pub async fn count<'a, E>(executor: E) -> PinionResult<i64>
+  where
+    E: Executor<'a, Database = Postgres>,
+  {
+    let row = sqlx::query("SELECT COUNT(*) as count FROM users")
+      .fetch_one(executor)
+      .await
+      .map_err(|e| pinion_core::error::PinionError::Database(e.to_string()))?;
+    Ok(row.get("count"))
+  }
+
   pub async fn create<'a, E>(
     executor: E,
     email: &str,
     username: &str,
     password_hash: &str,
+    root_admin: bool,
   ) -> PinionResult<User>
   where
     E: Executor<'a, Database = Postgres>,
   {
     let user = sqlx::query(
-            "INSERT INTO users (email, username, password_hash) VALUES ($1, $2, $3) RETURNING id, email, password_hash, username, root_admin, permissions, created_at, updated_at"
+            "INSERT INTO users (email, username, password_hash, root_admin) VALUES ($1, $2, $3, $4) RETURNING id, email, password_hash, username, root_admin, permissions, created_at, updated_at"
         )
         .bind(email)
         .bind(username)
         .bind(password_hash)
+        .bind(root_admin)
         .fetch_one(executor)
         .await
         .map_err(|e| pinion_core::error::PinionError::Database(e.to_string()))?;

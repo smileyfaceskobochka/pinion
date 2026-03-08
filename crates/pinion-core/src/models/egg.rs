@@ -1,18 +1,16 @@
 use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Egg {
   pub id: Uuid,
   pub name: String,
+  pub author: String,
   pub description: Option<String>,
   pub docker_image: String,
   pub startup: String,
-  pub config_files: serde_json::Value,
-  pub config_startup: serde_json::Value,
-  pub created_at: OffsetDateTime,
-  pub updated_at: OffsetDateTime,
+  pub config: serde_json::Value,
+  pub variables: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

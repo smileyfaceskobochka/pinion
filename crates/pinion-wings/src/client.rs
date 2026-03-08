@@ -1,5 +1,5 @@
 use crate::error::{WingsError, WingsResult};
-use crate::types::{PowerAction, WingsServerConfig};
+use crate::types::PowerAction;
 use pinion_core::models::Node;
 use reqwest::{Client, StatusCode};
 use uuid::Uuid;
@@ -58,10 +58,13 @@ impl WingsClient {
     self.handle_response(resp).await
   }
 
-  pub async fn create_server(&self, config: &WingsServerConfig) -> WingsResult<()> {
+  pub async fn create_server(&self, uuid: Uuid, start_on_completion: bool) -> WingsResult<()> {
     let resp = self
       .request(reqwest::Method::POST, "/servers")
-      .json(config)
+      .json(&serde_json::json!({
+        "uuid": uuid,
+        "start_on_completion": start_on_completion
+      }))
       .send()
       .await
       .map_err(|e| WingsError::Unreachable(e.to_string()))?;
@@ -86,10 +89,9 @@ impl WingsClient {
     self.handle_empty_response(resp).await
   }
 
-  pub async fn sync_server(&self, uuid: Uuid, config: &WingsServerConfig) -> WingsResult<()> {
+  pub async fn sync_server(&self, uuid: Uuid) -> WingsResult<()> {
     let resp = self
       .request(reqwest::Method::POST, &format!("/servers/{}/sync", uuid))
-      .json(config)
       .send()
       .await
       .map_err(|e| WingsError::Unreachable(e.to_string()))?;

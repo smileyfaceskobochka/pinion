@@ -1,15 +1,38 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useAuth } from "../../context/auth";
 import { apiFetch } from "../../lib/api";
-import { type Server } from "../../lib/types";
+import { type Server, type Node, type Egg } from "../../lib/types";
+import { AsciiBox } from "../../components/AsciiBox";
+import { AsciiModal } from "../../components/AsciiModal";
+import { TerminalInput } from "../../components/TerminalInput";
 
 export const Route = createFileRoute("/servers/")({
   component: ServerList,
 });
 
 function ServerList() {
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    node_id: "",
+    egg_id: "",
+    limits: {
+      memory: 2048,
+      swap: 0,
+      disk: 5000,
+      io: 500,
+      cpu: 100,
+      threads: 0,
+    },
+    environment: {
+      "EULA": "true"
+    }
+  });
 
   if (!isAuthenticated) return <Navigate to="/auth" />;
 
@@ -19,102 +42,219 @@ function ServerList() {
     enabled: !!token,
   });
 
-  const totalServers = servers?.length ?? 0;
-  const runningServers = servers?.filter((server) => server.status.toLowerCase() === "running").length ?? 0;
+  const { data: nodes } = useQuery({
+    queryKey: ["admin", "nodes"],
+    queryFn: () => apiFetch<Node[]>("/api/nodes", {}, token),
+    enabled: isModalOpen,
+  });
+
+  const { data: eggs } = useQuery({
+    queryKey: ["admin", "eggs"],
+    queryFn: () => apiFetch<Egg[]>("/api/eggs", {}, token),
+    enabled: isModalOpen,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (newServer: typeof formData) =>
+      apiFetch("/api/servers", {
+        method: "POST",
+        body: JSON.stringify({
+          ...newServer,
+          owner_id: user?.id,
+          limits: { ...newServer.limits, threads: Number(newServer.limits.threads) }
+        }),
+      }, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["servers"] });
+      setIsModalOpen(false);
+      setFormData({
+        name: "", description: "", node_id: "", egg_id: "",
+        limits: { memory: 2048, swap: 0, disk: 5000, io: 500, cpu: 100, threads: 0 },
+        environment: { "EULA": "true" }
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-pulse">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-52 rounded-xl border border-border-subtle bg-bg-card" />
-        ))}
-      </div>
-    );
+    return <div className="text-subtext0 animate-pulse">{"> Fetching infrastructure state..."}</div>;
   }
 
   if (error) {
-    return (
-      <div className="dashboard-panel p-5 border-red-500/30 text-red-300">
-        <p className="text-sm font-semibold">Could not load servers</p>
-        <p className="text-sm mt-1 opacity-90">{(error as Error).message}</p>
-      </div>
-    );
+    return <div className="text-red font-bold">ERR: {(error as Error).message}</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <section className="dashboard-panel p-6 md:p-7 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-display">Servers</h1>
-          <p className="text-text-secondary mt-2 text-sm md:text-base">
-            Clean overview of your deployments with quick status visibility.
-          </p>
+    <div className="space-y-6 text-sm">
+      <div className="flex justify-between items-center bg-surface0 p-2 border border-surface1">
+        <span className="text-mauve font-bold">~/pinion/servers</span>
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="ascii-btn-primary font-bold text-xs uppercase"
+        >
+          + DEPLOY INSTANCE
+        </button>
+      </div>
+
+      <AsciiBox borderColor="border-surface2">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left whitespace-nowrap">
+            <thead>
+              <tr className="text-subtext0 border-b border-surface1 border-dashed">
+                <th className="font-normal py-2 px-4 w-24">UUID</th>
+                <th className="font-normal py-2 px-4">NAME</th>
+                <th className="font-normal py-2 px-4 w-32">NODE</th>
+                <th className="font-normal py-2 px-4 w-32">STATUS</th>
+                <th className="font-normal py-2 px-4 w-24 text-right">ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {servers?.map((server) => (
+                <tr key={server.id} className="hover:bg-surface0 border-b border-surface1 border-dashed last:border-none group transition-none">
+                  <td className="py-3 px-4 text-surface2 font-bold group-hover:text-subtext1">
+                    {server.id.split("-")[0]}
+                  </td>
+                  <td className="py-3 px-4 font-bold text-text group-hover:text-blue">
+                    <Link to="/servers/$serverId" params={{ serverId: server.id }} className="hover:underline underline-offset-4">
+                      {server.name}
+                    </Link>
+                  </td>
+                  <td className="py-3 px-4 text-subtext0">
+                    {server.node_id.split("-")[0]}
+                  </td>
+                  <td className="py-3 px-4">
+                    <StatusBadge status={server.status} />
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <Link to="/servers/$serverId" params={{ serverId: server.id }} className="text-blue hover:text-mauve font-bold">
+                      [ MANAGE ]
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {servers?.length === 0 && (
+            <div className="py-8 text-center text-subtext0 font-bold border-t border-surface1 border-dashed mt-2">
+              {"( 0 instances running. Network idle. )"}
+            </div>
+          )}
         </div>
-        <button className="btn-brand h-10 px-5 text-sm">Deploy Server</button>
-      </section>
+      </AsciiBox>
+      
+      <div className="text-surface2 text-xs text-right">
+        {servers?.length} processes loaded. Let's build something.
+      </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <StatCard label="Total" value={totalServers} />
-        <StatCard label="Running" value={runningServers} accent="success" />
-      </section>
+      <AsciiModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="DEPLOY VIRTUAL INSTANCE"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid grid-cols-2 gap-4">
+            <TerminalInput
+              label="Instance Name"
+              placeholder="Minecraft Survival"
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
+              required
+            />
+            <TerminalInput
+              label="Description"
+              placeholder="Local play"
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
 
-      {totalServers === 0 ? (
-        <section className="dashboard-panel p-10 text-center">
-          <p className="text-lg font-semibold">No servers yet</p>
-          <p className="text-sm text-text-secondary mt-2">Create your first deployment to populate this dashboard.</p>
-        </section>
-      ) : (
-        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {servers?.map((server) => (
-            <Link
-              key={server.id}
-              to="/servers/$serverId"
-              params={{ serverId: server.id }}
-              className="dashboard-panel p-5 hover:border-brand/50 hover:bg-bg-hover transition-colors"
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-blue text-[10px] font-bold uppercase tracking-wider">Target Node</label>
+              <select 
+                className="w-full bg-surface0 border border-surface1 px-2 py-2 text-text font-mono focus:outline-none focus:border-mauve"
+                value={formData.node_id}
+                onChange={e => setFormData({...formData, node_id: e.target.value})}
+                required
+              >
+                <option value="">[ SELECT_NODE ]</option>
+                {nodes?.map(n => <option key={n.id} value={n.id}>{n.name} ({n.fqdn})</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-blue text-[10px] font-bold uppercase tracking-wider">Application Type</label>
+              <select 
+                className="w-full bg-surface0 border border-surface1 px-2 py-2 text-text font-mono focus:outline-none focus:border-mauve"
+                value={formData.egg_id}
+                onChange={e => setFormData({...formData, egg_id: e.target.value})}
+                required
+              >
+                <option value="">[ SELECT_TEMPLATE ]</option>
+                {eggs?.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="border-t border-surface1 border-dashed pt-4 mt-2">
+            <span className="text-surface2 text-[10px] font-bold uppercase mb-2 block">Resource Allocation Limits</span>
+            <div className="grid grid-cols-3 gap-4">
+              <TerminalInput
+                label="RAM (MiB)"
+                type="number"
+                value={formData.limits.memory}
+                onChange={e => setFormData({...formData, limits: {...formData.limits, memory: parseInt(e.target.value)}})}
+                required
+              />
+              <TerminalInput
+                label="Disk (MiB)"
+                type="number"
+                value={formData.limits.disk}
+                onChange={e => setFormData({...formData, limits: {...formData.limits, disk: parseInt(e.target.value)}})}
+                required
+              />
+              <TerminalInput
+                label="CPU %"
+                type="number"
+                value={formData.limits.cpu}
+                onChange={e => setFormData({...formData, limits: {...formData.limits, cpu: parseInt(e.target.value)}})}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="pt-6 flex justify-end gap-4 border-t border-surface1 border-dashed mt-4">
+            <button 
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="text-subtext0 font-bold hover:underline"
             >
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-lg font-semibold leading-tight">{server.name}</h3>
-                <StatusBadge status={server.status} />
-              </div>
-              <p className="text-sm text-text-secondary mt-2 min-h-10">
-                {server.description || "No description provided."}
-              </p>
-              <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between text-xs text-text-tertiary">
-                <span>Node: {server.node_id.split("-")[0]}</span>
-                <span className="font-mono">{server.uuid.split("-")[0]}</span>
-              </div>
-            </Link>
-          ))}
-        </section>
-      )}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  accent = "default",
-}: {
-  label: string;
-  value: number;
-  accent?: "default" | "success";
-}) {
-  return (
-    <div className={`dashboard-panel p-5 ${accent === "success" ? "border-green-500/30" : ""}`}>
-      <p className="text-xs uppercase tracking-wide text-text-tertiary">{label}</p>
-      <p className="text-3xl font-bold mt-2">{value}</p>
+              [ ABORT ]
+            </button>
+            <button 
+              type="submit"
+              disabled={createMutation.isPending}
+              className="text-mauve font-bold hover:underline"
+            >
+              {createMutation.isPending ? "[ PROVISIONING... ]" : "[ EXECUTE_DEPLOYMENT ]"}
+            </button>
+          </div>
+        </form>
+      </AsciiModal>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
-  let classes = "badge badge-neutral";
+  
+  if (normalized === "running") return <span className="text-green font-bold">[ RUNNING ]</span>;
+  if (normalized === "offline") return <span className="text-red font-bold">[ OFFLINE ]</span>;
+  if (normalized === "starting" || normalized === "stopping" || normalized === "installing") return <span className="text-yellow font-bold animate-pulse">[ {status.toUpperCase()} ]</span>;
 
-  if (normalized === "running") classes = "badge badge-success";
-  if (normalized === "starting" || normalized === "stopping") classes = "badge badge-warning";
-  if (normalized === "offline") classes = "badge badge-danger";
-
-  return <span className={classes}>{status}</span>;
+  return <span className="text-subtext0">[{status.toUpperCase()}]</span>;
 }

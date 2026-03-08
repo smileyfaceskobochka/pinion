@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../../context/auth";
 import { apiFetch } from "../../../lib/api";
 import { type Server } from "../../../lib/types";
+import { AsciiBox } from "../../../components/AsciiBox";
 
 export const Route = createFileRoute("/servers/$serverId/settings")({
   component: ServerSettings,
@@ -18,66 +19,62 @@ function ServerSettings() {
     enabled: !!token,
   });
 
-  if (isLoading) return <div className="h-96 animate-pulse bg-neutral-900 rounded-xl" />;
+  if (isLoading) return <div className="text-subtext0 animate-pulse">{"> Loading instance parameters..."}</div>;
 
   return (
-    <div className="max-w-4xl space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
-      {/* General Configuration Section */}
-      <section className="space-y-6">
-        <header className="border-b border-border-subtle pb-4">
-          <h2 className="text-xl font-bold text-white">Instance Configuration</h2>
-          <p className="text-sm text-text-secondary mt-1">Manage the primary identity and metadata for this server deployment.</p>
-        </header>
-        
-        <div className="card-solid p-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Server Name</label>
+    <div className="space-y-8 text-sm max-w-4xl pb-10">
+      
+      {/* General Configuration */}
+      <AsciiBox title="INSTANCE PARAMS" borderColor="border-surface2">
+        <div className="space-y-6">
+          <div className="space-y-1">
+            <label className="text-blue font-bold">NAME_ENV:</label>
+            <div className="flex items-center gap-2">
+              <span className="text-surface2">{">"}</span>
               <input 
                 type="text" 
                 defaultValue={server?.name} 
-                className="input-field"
-                placeholder="My Awesome Server"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Description</label>
-              <input 
-                type="text" 
-                defaultValue={server?.description} 
-                className="input-field"
-                placeholder="Briefly describe this instance"
+                className="ascii-input w-full md:w-2/3"
+                placeholder="Instance Name"
               />
             </div>
           </div>
-
-          <div className="pt-6 border-t border-border-subtle flex justify-end">
-            <button className="btn-brand h-10 px-8 text-xs font-bold uppercase tracking-widest shadow-lg shadow-brand/20">
-              Save Configuration
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Danger Zone Section - High-Contrast & Explicit */}
-      <section className="space-y-6">
-        <header className="border-b border-red-500/20 pb-4">
-          <h2 className="text-xl font-bold text-red-500">Decommissioning & Safety</h2>
-          <p className="text-sm text-text-secondary mt-1">Irreversible actions that affect data persistence and deployment lifecycle.</p>
-        </header>
-
-        <div className="card-solid p-8 border-red-500/20 bg-red-500/[0.02]">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="space-y-1">
-              <h4 className="font-bold text-white text-lg">Destroy Instance</h4>
-              <p className="text-xs text-text-tertiary max-w-md">Permanently remove this server deployment from the node. This will erase all associated file volumes and configurations immediately.</p>
+          
+          <div className="space-y-1">
+            <label className="text-blue font-bold">DESC_META:</label>
+            <div className="flex items-start gap-2">
+              <span className="text-surface2 pt-2">{">"}</span>
+              <textarea 
+                defaultValue={server?.description ?? ""} 
+                className="ascii-input w-full h-24 resize-none"
+                placeholder="Metadata description"
+              />
             </div>
-            <button className="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-red-900/20 transition-all duration-200 active:scale-95">
-              Destroy
+          </div>
+
+          <div className="pt-4 border-t border-surface1 border-dashed text-right">
+            <button className="ascii-btn-primary font-bold">
+              [ WRITE REVISION ]
             </button>
           </div>
         </div>
-      </section>
+      </AsciiBox>
+
+      {/* Danger Zone */}
+      <AsciiBox title="DESTRUCTIVE OPERATIONS" borderColor="border-red">
+        <div className="space-y-4">
+          <div className="text-red font-bold">
+            WARNING: Executing a destruction protocol is irreversible. All persistent volumes and metadata blocks will be permanently purged.
+          </div>
+          <div className="flex justify-between items-center border-t border-red/30 border-dashed pt-4">
+            <span className="text-subtext0 text-xs text-red">Require root privileges for confirmation.</span>
+            <button className="ascii-btn-danger font-bold uppercase tracking-widest">
+              [ PURGE INSTANCE ]
+            </button>
+          </div>
+        </div>
+      </AsciiBox>
+
     </div>
   );
 }

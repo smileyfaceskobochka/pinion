@@ -9,7 +9,7 @@ members = [
 
 [workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["smileyfaceskobochka"]
 license = "MIT"
 repository = "https://github.com/smileyfaceskobochka/pinion"
@@ -81,15 +81,15 @@ anyhow = "1"
 config = { version = "0.15.19", features = ["toml"] }
 
 # --- Logging / tracing ---
-tracing              = "0.1"
-tracing-subscriber   = { version = "0.3", features = ["env-filter", "json"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 # --- Async ---
-futures-util         = "0.3"
+futures-util = "0.3"
 
 # --- Misc ---
 bitflags = { version = "2", features = ["serde"] }
-bon = "3.9.0"  # ergonomic builder macros
+bon = "3.9.0"                                      # ergonomic builder macros
 
 [profile.release]
 opt-level = 3

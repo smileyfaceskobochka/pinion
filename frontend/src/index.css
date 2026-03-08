@@ -1,71 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap');
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&display=swap');
 
 @theme {
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Outfit", system-ui, sans-serif;
-
-  --color-brand: #6366f1;
-  --color-brand-muted: #312e81;
-  --color-bg-main: #0b0c10;
-  --color-bg-card: #11131a;
-  --color-bg-hover: #161923;
-  --color-border-subtle: #252936;
-  --color-border-strong: #33384a;
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #b4bccf;
-  --color-text-tertiary: #8e97ad;
+  --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  /* Catppuccin Mocha Palette */
+  --color-crust: #11111b;
+  --color-mantle: #181825;
+  --color-base: #1e1e2e;
+  --color-surface0: #313244;
+  --color-surface1: #45475a;
+  --color-surface2: #585b70;
+  
+  --color-text: #cdd6f4;
+  --color-subtext1: #bac2de;
+  --color-subtext0: #a6adc8;
+  --color-overlay2: #9399b2;
+  
+  /* Accents */
+  --color-blue: #89b4fa;
+  --color-mauve: #cba6f7;
+  --color-green: #a6e3a1;
+  --color-yellow: #f9e2af;
+  --color-red: #f38ba8;
 }
 
 :root {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   line-height: 1.5;
   font-weight: 400;
+  font-size: 14px;
   color-scheme: dark;
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-main);
-  -webkit-font-smoothing: antialiased;
+  color: var(--color-text);
+  background-color: var(--color-base);
+  -webkit-font-smoothing: none; /* Crisper rendering for monospace */
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  /* Scanline effect */
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.1)
+  );
+  background-size: 100% 4px;
 }
 
-.input-field {
-  @apply w-full bg-black/50 border border-border-subtle rounded-lg px-4 py-2.5 text-sm transition-all placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand;
+/* Remove all border radii */
+* {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transition: none !important; /* Instant snap for terminal feel */
 }
 
-.btn-brand {
-  @apply inline-flex items-center justify-center rounded-lg bg-brand text-white font-semibold hover:bg-indigo-500 active:scale-95 transition-all disabled:opacity-50;
+/* Interactive Elements */
+a, button {
+  cursor: pointer;
 }
 
-.btn-outline {
-  @apply inline-flex items-center justify-center rounded-lg bg-transparent border border-border-strong text-white font-semibold hover:bg-bg-hover active:scale-95 transition-all;
+.ascii-input {
+  @apply w-full bg-base border border-surface1 px-3 py-1.5 text-text focus:outline-none focus:border-blue focus:bg-surface0 placeholder:text-overlay2;
 }
 
-.badge {
-  @apply px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide border;
+.ascii-btn {
+  @apply inline-flex items-center px-4 py-1 border border-surface1 bg-mantle text-text hover:bg-text hover:text-base active:bg-subtext1;
 }
 
-.badge-success { @apply bg-green-500/10 text-green-300 border-green-500/25; }
-.badge-warning { @apply bg-yellow-500/10 text-yellow-300 border-yellow-500/25; }
-.badge-danger { @apply bg-red-500/10 text-red-300 border-red-500/25; }
-.badge-neutral { @apply bg-slate-500/10 text-slate-300 border-slate-500/25; }
-
-.dashboard-panel {
-  background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 0.9rem;
+.ascii-btn-primary {
+  @apply inline-flex items-center px-4 py-1 border border-blue bg-blue/10 text-blue hover:bg-blue hover:text-base active:bg-blue/80;
 }
 
+.ascii-btn-danger {
+  @apply inline-flex items-center px-4 py-1 border border-red bg-red/10 text-red hover:bg-red hover:text-base;
+}
+
+/* Status Colors */
+.text-success { color: var(--color-green); }
+.text-warning { color: var(--color-yellow); }
+.text-danger { color: var(--color-red); }
+
+/* Scrollbars - Blocky Terminal Style */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
 }
-::-webkit-scrollbar-track { background: var(--color-bg-main); }
+::-webkit-scrollbar-track {
+  background: var(--color-crust);
+  border-left: 1px solid var(--color-surface1);
+}
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border: 2px solid var(--color-bg-main);
-  border-radius: 5px;
+  background: var(--color-surface2);
+  border: 1px solid var(--color-surface1);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text);
+}
+::-webkit-scrollbar-corner {
+  background: var(--color-crust);
 }

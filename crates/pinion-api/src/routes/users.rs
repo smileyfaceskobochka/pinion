@@ -44,7 +44,7 @@ pub async fn create_user(
   .to_string();
 
   let user =
-    UserRepo::create(&state.pool, &payload.email, &payload.username, &password_hash).await?;
+    UserRepo::create(&state.pool, &payload.email, &payload.username, &password_hash, false).await?;
 
   Ok(Json(user))
 }

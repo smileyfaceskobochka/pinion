@@ -74,15 +74,19 @@ pub async fn register(
   .map_err(|e| ApiError::Internal(e.to_string()))?
   .to_string();
 
+  // Auto-promote first user to root admin (bootstrap)
+  let user_count = UserRepo::count(&state.pool).await?;
+  let is_first_user = user_count == 0;
+
   let user =
-    UserRepo::create(&state.pool, &payload.email, &payload.username, &password_hash).await?;
+    UserRepo::create(&state.pool, &payload.email, &payload.username, &password_hash, is_first_user).await?;
 
   // Log them in immediately
   let now = time::OffsetDateTime::now_utc().unix_timestamp();
   let claims = Claims {
     sub: user.id,
     email: user.email,
-    is_root: user.root_admin, // First user might need root manual boost or bootstrapping
+    is_root: user.root_admin,
     exp: (now + 86400) as usize,
   };
 

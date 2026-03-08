@@ -11,7 +11,7 @@ impl EggRepo {
     E: Executor<'a, Database = Postgres>,
   {
     let row = sqlx::query(
-            "SELECT id, name, description, docker_image, startup, config_files, config_startup, created_at, updated_at FROM eggs WHERE id = $1"
+            "SELECT id, name, author, description, docker_image, startup, config, variables FROM eggs WHERE id = $1"
         )
         .bind(id)
         .fetch_optional(executor)
@@ -22,13 +22,12 @@ impl EggRepo {
     Ok(Egg {
       id: row.get("id"),
       name: row.get("name"),
+      author: row.get("author"),
       description: row.get("description"),
       docker_image: row.get("docker_image"),
       startup: row.get("startup"),
-      config_files: row.get("config_files"),
-      config_startup: row.get("config_startup"),
-      created_at: row.get("created_at"),
-      updated_at: row.get("updated_at"),
+      config: row.get("config"),
+      variables: row.get("variables"),
     })
   }
 
@@ -37,25 +36,26 @@ impl EggRepo {
     E: Executor<'a, Database = Postgres>,
   {
     let row = sqlx::query(
-            "INSERT INTO eggs (id, name, description, docker_image, startup, config_files, config_startup) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7) 
+            "INSERT INTO eggs (id, name, author, description, docker_image, startup, config, variables) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
              ON CONFLICT (id) DO UPDATE SET 
                 name = EXCLUDED.name,
+                author = EXCLUDED.author,
                 description = EXCLUDED.description,
                 docker_image = EXCLUDED.docker_image,
                 startup = EXCLUDED.startup,
-                config_files = EXCLUDED.config_files,
-                config_startup = EXCLUDED.config_startup,
-                updated_at = now()
-             RETURNING id, name, description, docker_image, startup, config_files, config_startup, created_at, updated_at"
+                config = EXCLUDED.config,
+                variables = EXCLUDED.variables
+             RETURNING id, name, author, description, docker_image, startup, config, variables"
         )
         .bind(egg.id)
         .bind(&egg.name)
+        .bind(&egg.author)
         .bind(&egg.description)
         .bind(&egg.docker_image)
         .bind(&egg.startup)
-        .bind(&egg.config_files)
-        .bind(&egg.config_startup)
+        .bind(&egg.config)
+        .bind(&egg.variables)
         .fetch_one(executor)
         .await
         .map_err(|e| pinion_core::error::PinionError::Database(e.to_string()))?;
@@ -63,13 +63,12 @@ impl EggRepo {
     Ok(Egg {
       id: row.get("id"),
       name: row.get("name"),
+      author: row.get("author"),
       description: row.get("description"),
       docker_image: row.get("docker_image"),
       startup: row.get("startup"),
-      config_files: row.get("config_files"),
-      config_startup: row.get("config_startup"),
-      created_at: row.get("created_at"),
-      updated_at: row.get("updated_at"),
+      config: row.get("config"),
+      variables: row.get("variables"),
     })
   }
 
@@ -78,7 +77,7 @@ impl EggRepo {
     E: Executor<'a, Database = Postgres>,
   {
     let rows = sqlx::query(
-            "SELECT id, name, description, docker_image, startup, config_files, config_startup, created_at, updated_at FROM eggs",
+            "SELECT id, name, author, description, docker_image, startup, config, variables FROM eggs",
         )
         .fetch_all(executor)
         .await
@@ -90,13 +89,12 @@ impl EggRepo {
         .map(|row| Egg {
           id: row.get("id"),
           name: row.get("name"),
+          author: row.get("author"),
           description: row.get("description"),
           docker_image: row.get("docker_image"),
           startup: row.get("startup"),
-          config_files: row.get("config_files"),
-          config_startup: row.get("config_startup"),
-          created_at: row.get("created_at"),
-          updated_at: row.get("updated_at"),
+          config: row.get("config"),
+          variables: row.get("variables"),
         })
         .collect(),
     )

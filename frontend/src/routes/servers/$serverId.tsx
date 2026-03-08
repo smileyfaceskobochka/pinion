@@ -19,53 +19,56 @@ function ServerLayout() {
   });
 
   if (isLoading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-10 w-64 bg-neutral-900 rounded-lg" />
-        <div className="h-px bg-border-subtle" />
-        <div className="h-96 bg-neutral-900 rounded-xl" />
-      </div>
-    );
+    return <div className="text-subtext0 animate-pulse">{"> Resolving instance identity..."}</div>;
   }
 
   if (!server) {
     return (
-      <div className="p-12 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-white">Instance not found</h2>
-        <p className="text-text-secondary">The server you are looking for does not exist or has been decommissioned.</p>
-        <Link to="/servers" className="btn-brand">Back to Infrastructure</Link>
+      <div className="text-red font-bold">
+        ERR: Instance not found or access denied.
+        <br />
+        <Link to="/servers" className="text-blue hover:underline">{"<-"} Return to infrastructure</Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {/* Server Header & Identity */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-text-tertiary">
-          <Link to="/servers" className="hover:text-white transition-colors">Infrastructure</Link>
-          <span>/</span>
-          <span className="text-text-secondary">Instance</span>
+    <div className="space-y-4 text-sm">
+      
+      {/* CLI Header Blocks */}
+      <div className="flex flex-wrap items-end gap-1 mb-6">
+        <Link to="/servers" className="text-blue hover:underline underline-offset-4 font-bold">
+          ~/pinion/servers
+        </Link>
+        <span className="text-surface2">/</span>
+        <span className="text-mauve font-bold">{server.name}</span>
+      </div>
+
+      <div className="border border-surface1 p-4 bg-crust flex flex-col md:flex-row justify-between gap-4">
+        <div>
+          <span className="text-surface2">ID: </span>
+          <span className="text-text font-bold">{server.id}</span>
         </div>
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-extrabold tracking-tight font-display text-white">{server.name}</h1>
-          <div className="px-2 py-0.5 rounded bg-neutral-900 border border-border-subtle text-[10px] font-mono font-bold text-text-tertiary">
-            {server.uuid}
-          </div>
+        <div>
+          <span className="text-surface2">NODE: </span>
+          <span className="text-green font-bold">{server.node_id}</span>
         </div>
       </div>
 
-      {/* High-Contrast Tab Navigation */}
-      <div className="flex gap-1 bg-black border border-border-subtle p-1 rounded-xl w-fit">
-        <TabLink to="/servers/$serverId" params={{ serverId }} label="Console" />
-        <TabLink to="/servers/$serverId/files" params={{ serverId }} label="Files" />
-        <TabLink to="/servers/$serverId/settings" params={{ serverId }} label="Settings" />
+      {/* ASCII Tabs */}
+      <div className="flex gap-2 border-b border-surface1 border-dashed pb-2">
+        <TabLink to="/servers/$serverId" params={{ serverId }} label="CONSOLE" />
+        <span className="text-surface2">|</span>
+        <TabLink to="/servers/$serverId/files" params={{ serverId }} label="FILESYSTEM" />
+        <span className="text-surface2">|</span>
+        <TabLink to="/servers/$serverId/settings" params={{ serverId }} label="CONFIGURATION" />
       </div>
 
-      {/* Main Viewport Area */}
-      <div className="relative">
+      {/* Viewport */}
+      <div className="pt-2">
         <Outlet />
       </div>
+
     </div>
   );
 }
@@ -76,10 +79,10 @@ function TabLink({ to, params, label }: { to: string; params: any; label: string
       to={to}
       params={params}
       activeOptions={{ exact: true }}
-      className="px-6 py-2 text-sm font-bold rounded-lg transition-all duration-200 text-text-secondary hover:text-white hover:bg-neutral-900"
-      activeProps={{ className: "!bg-white !text-black shadow-lg" }}
+      className="text-subtext0 hover:text-text hover:bg-surface0 px-2 transition-none"
+      activeProps={{ className: "!text-blue !font-bold" }}
     >
-      {label}
+      [ {label} ]
     </Link>
   );
 }

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/auth";
 import { apiFetch } from "../../lib/api";
+import { AsciiBox } from "../../components/AsciiBox";
 
 interface UserProfile {
   id: string;
@@ -24,55 +25,59 @@ function AdminUsers() {
     enabled: !!token,
   });
 
-  if (isLoading) return <div className="h-96 animate-pulse bg-neutral-900 rounded-xl" />;
+  if (isLoading) return <div className="text-subtext0 animate-pulse">{"> Fetching identity matrix..."}</div>;
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-500 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-border-subtle pb-8">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight font-display text-white">Identity & Access</h1>
-          <p className="text-text-secondary mt-2 font-medium max-w-lg">Manage user accounts, administrative privileges, and security policies.</p>
-        </div>
-        <button className="btn-brand h-11 px-8 shadow-lg shadow-brand/20">
-          Create User Account
+    <div className="space-y-6 text-sm">
+      <div className="flex justify-between items-center bg-surface0 p-2 border border-surface1">
+        <span className="text-mauve font-bold">~/pinion/admin/users</span>
+        <button className="ascii-btn-primary font-bold text-xs uppercase">
+          + ADD USER
         </button>
       </div>
 
-      <div className="card-solid overflow-hidden shadow-2xl">
-        <table className="w-full text-left text-sm font-medium">
-          <thead className="bg-black border-b border-border-subtle text-text-tertiary text-[10px] font-black uppercase tracking-[0.2em]">
-            <tr>
-              <th className="px-8 py-4 font-black">Identity</th>
-              <th className="px-8 py-4 font-black">Email Contact</th>
-              <th className="px-8 py-4 font-black text-center">Authorization</th>
-              <th className="px-8 py-4 text-right font-black">Provisioned</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border-subtle">
-            {users?.map((user) => (
-              <tr key={user.id} className="hover:bg-neutral-900 transition-colors group">
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-neutral-900 flex items-center justify-center text-sm font-black border border-border-subtle shadow-inner">
-                      {user.username[0].toUpperCase()}
-                    </div>
-                    <span className="font-bold text-white group-hover:text-brand transition-colors font-display text-lg">{user.username}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-text-secondary font-medium">{user.email}</td>
-                <td className="px-8 py-5 text-center">
-                  <span className={`badge ${user.root_admin ? 'badge-brand bg-brand/10 text-brand border-brand/20' : 'badge-neutral bg-black'}`}>
-                    {user.root_admin ? 'Infrastructure Admin' : 'Standard User'}
-                  </span>
-                </td>
-                <td className="px-8 py-5 text-right text-text-tertiary text-xs font-mono">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
+      <AsciiBox borderColor="border-surface2">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left whitespace-nowrap">
+            <thead>
+              <tr className="text-subtext0 border-b border-surface1 border-dashed">
+                <th className="font-normal py-2 px-4">USERNAME</th>
+                <th className="font-normal py-2 px-4">EMAIL_ADDR</th>
+                <th className="font-normal py-2 px-4 text-center">ROLE</th>
+                <th className="font-normal py-2 px-4 text-right">CREATED_AT</th>
+                <th className="font-normal py-2 px-4 w-24 text-right">ACTION</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {users?.map((user) => (
+                <tr key={user.id} className="hover:bg-surface0 border-b border-surface1 border-dashed last:border-none transition-none group">
+                  <td className="py-3 px-4 font-bold text-text group-hover:text-blue">
+                    {user.username}
+                  </td>
+                  <td className="py-3 px-4 text-subtext0">
+                    {user.email}
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    {user.root_admin ? (
+                      <span className="text-mauve font-bold">[ ROOT_ADMIN ]</span>
+                    ) : (
+                      <span className="text-surface2">[ USER ]</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-right text-subtext0">
+                    {new Date(user.created_at).toISOString().replace("T", " ").substring(0, 19)}
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <button className="text-red hover:text-mauve font-bold">
+                      [ DEL ]
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </AsciiBox>
     </div>
   );
 }

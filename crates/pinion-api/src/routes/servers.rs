@@ -7,7 +7,7 @@ use axum::{
 };
 use pinion_core::models::{Server, ServerLimits};
 use pinion_db::repos::{AllocationRepo, EggRepo, NodeRepo, ServerRepo};
-use pinion_wings::types::WingsServerConfig;
+// use pinion_wings::types::WingsServerConfig;
 use pinion_wings::WingsClient;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -57,7 +57,7 @@ pub async fn create_server(
 
   // 3. Load node and egg for Wings config
   let node = NodeRepo::find_by_id(&mut *tx, payload.node_id).await?;
-  let egg = EggRepo::find_by_id(&mut *tx, payload.egg_id).await?;
+  let _egg = EggRepo::find_by_id(&mut *tx, payload.egg_id).await?;
 
   // 4. Create server record (within transaction)
   let server = ServerRepo::create(
@@ -76,42 +76,20 @@ pub async fn create_server(
   // 5. Assign allocation
   AllocationRepo::assign(&mut *tx, allocation.id, server.id).await?;
 
-  // 6. Wings API call
-  let wings = WingsClient::from_node(&node);
-  let wings_config = WingsServerConfig {
-    uuid: server.id,
-    start_on_completion: true,
-    skip_scripts: false,
-    environment: payload.environment.clone(),
-    invocation: egg.startup.clone(),
-    build: pinion_wings::types::WingsBuildConfig {
-      memory: payload.limits.memory,
-      swap: payload.limits.swap,
-      disk: payload.limits.disk,
-      io: payload.limits.io,
-      cpu: payload.limits.cpu,
-      threads: payload.limits.threads,
-      oom_disabled: true,
-    },
-    container: pinion_wings::types::WingsContainerConfig { image: egg.docker_image.clone() },
-    allocations: pinion_wings::types::WingsAllocationConfig {
-      default: pinion_wings::types::WingsAllocation {
-        ip: allocation.ip.clone(),
-        port: allocation.port,
-      },
-      additional: vec![],
-    },
-  };
+  // 6. Commit transaction BEFORE Wings call so Wings can see the server
+  tx.commit().await.map_err(|e| ApiError::Internal(e.to_string()))?;
 
-  match wings.create_server(&wings_config).await {
+  // 7. Wings API call
+  let wings = WingsClient::from_node(&node);
+
+  match wings.create_server(server.id, true).await {
     Ok(_) => {
-      // 7. Success - Commit transaction
-      tx.commit().await.map_err(|e| ApiError::Internal(e.to_string()))?;
       Ok(Json(server))
     }
     Err(e) => {
-      // 8. Rollback - transaction automatically drops and rolls back
       tracing::error!("Wings failed to create server: {:?}", e);
+      // Update status to InstallFailed
+      let _ = ServerRepo::update_status(&state.pool, server.id, pinion_core::models::ServerState::InstallFailed).await;
       Err(e.into())
     }
   }

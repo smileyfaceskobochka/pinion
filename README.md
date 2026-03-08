@@ -18,38 +18,6 @@ Pelican Panel works. It's also 80,000 lines of PHP, Laravel, and Blade templates
 
 ---
 
-## Architecture
-
-```
-Browser / CLI
-     │
-     ▼
-┌─────────────────────────────┐
-│      Caddy (reverse proxy)  │
-│  /api/* /ws/*  →  Axum      │
-│  /*            →  Vite/SPA  │
-└──────────────┬──────────────┘
-               │
-     ┌─────────▼──────────┐
-     │   pinion-api        │   Axum HTTP + WebSocket server
-     │   (Rust binary)     │
-     └──┬──────────────┬───┘
-        │              │
-   ┌────▼────┐   ┌─────▼──────┐
-   │Postgres │   │   Redis     │
-   │  SQLx   │   │  (cache)    │
-   └─────────┘   └────────────┘
-        │
-        ▼
-   Wings HTTP API        ← Go daemon, reused as-is
-   ┌─────────────┐  ┌─────────────┐
-   │ wings@node1 │  │ wings@node2 │
-   │  Docker     │  │  Docker     │
-   │  ├─ mc-1    │  │  ├─ mc-3    │
-   │  └─ mc-2    │  │  └─ valheim │
-   └─────────────┘  └─────────────┘
-```
-
 The WebSocket console proxy is the key piece: Wings streams console output and resource stats over WebSocket, authenticated via short-lived JWTs that Pinion issues and refreshes transparently.
 
 ---
@@ -70,17 +38,17 @@ Each crate has a single clear responsibility. `pinion-core` has zero I/O depende
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| HTTP server | [Axum](https://github.com/tokio-rs/axum) 0.7 |
-| Async runtime | [Tokio](https://tokio.rs) 1 |
-| Database | PostgreSQL via [SQLx](https://github.com/launchbadge/sqlx) 0.7 |
-| Cache | Redis |
-| Wings client | [reqwest](https://github.com/seanmonstar/reqwest) + [tokio-tungstenite](https://github.com/snapview/tokio-tungstenite) |
-| Auth | Argon2 passwords, JWT sessions ([jsonwebtoken](https://github.com/Keats/jsonwebtoken)) |
-| Reverse proxy | [Caddy](https://caddyserver.com) |
-| Frontend | TypeScript + React + Vite |
-| Containerization | Docker + Compose |
+| Layer            | Technology                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| HTTP server      | [Axum](https://github.com/tokio-rs/axum) 0.7                                                                           |
+| Async runtime    | [Tokio](https://tokio.rs) 1                                                                                            |
+| Database         | PostgreSQL via [SQLx](https://github.com/launchbadge/sqlx) 0.7                                                         |
+| Cache            | Redis                                                                                                                  |
+| Wings client     | [reqwest](https://github.com/seanmonstar/reqwest) + [tokio-tungstenite](https://github.com/snapview/tokio-tungstenite) |
+| Auth             | Argon2 passwords, JWT sessions ([jsonwebtoken](https://github.com/Keats/jsonwebtoken))                                 |
+| Reverse proxy    | [Caddy](https://caddyserver.com)                                                                                       |
+| Frontend         | TypeScript + Preact + Vite                                                                                             |
+| Containerization | Docker + Compose                                                                                                       |
 
 ---
 
@@ -122,6 +90,7 @@ cargo run --bin pinion -- migrate
 ### 4. Register your Wings node
 
 In Pinion's admin UI (or via API), add a node with:
+
 - FQDN of the machine running Wings
 - The `token` value from `/etc/pelican/config.yml` on that machine
 - Allocated memory and disk

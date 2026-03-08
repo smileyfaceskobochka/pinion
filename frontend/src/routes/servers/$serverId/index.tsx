@@ -5,6 +5,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { useAuth } from "../../../context/auth";
 import { apiFetch } from "../../../lib/api";
+import { AsciiBox } from "../../../components/AsciiBox";
 
 export const Route = createFileRoute("/servers/$serverId/")({
   component: ServerConsole,
@@ -22,17 +23,33 @@ function ServerConsole() {
   useEffect(() => {
     if (!terminalRef.current || !token) return;
 
-    // Initialize Terminal with professional high-contrast theme
+    // Initialize Terminal with Catppuccin Mocha theme matches
     const term = new Terminal({
       cursorBlink: true,
       theme: {
-        background: "#000000",
-        foreground: "#ffffff",
-        cursor: "#4f46e5",
-        selectionBackground: "rgba(79, 70, 229, 0.3)",
+        background: "#1e1e2e", // Base
+        foreground: "#cdd6f4", // Text
+        cursor: "#cba6f7",     // Mauve
+        selectionBackground: "rgba(137, 180, 250, 0.3)", // Blue/30
+        black: "#45475a",      // Surface1
+        brightBlack: "#585b70",
+        red: "#f38ba8",
+        brightRed: "#f38ba8",
+        green: "#a6e3a1",
+        brightGreen: "#a6e3a1",
+        yellow: "#f9e2af",
+        brightYellow: "#f9e2af",
+        blue: "#89b4fa",
+        brightBlue: "#89b4fa",
+        magenta: "#cba6f7",
+        brightMagenta: "#cba6f7",
+        cyan: "#94e2d5",
+        brightCyan: "#94e2d5",
+        white: "#bac2de",
+        brightWhite: "#a6adc8",
       },
-      fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-      fontSize: 13,
+      fontFamily: '"Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+      fontSize: 14,
       lineHeight: 1.2,
     });
     
@@ -51,7 +68,7 @@ function ServerConsole() {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      term.writeln("\x1b[1;32m● SYSTEM: SESSION ESTABLISHED\x1b[0m");
+      term.writeln("\r\n\x1b[1;32m*** CONNECTION SECURED: ORCHESTRATION NODE ***\x1b[0m\r\n");
     };
 
     ws.onmessage = (event) => {
@@ -59,12 +76,12 @@ function ServerConsole() {
       if (msg.event === "console output") {
         term.write(msg.args[0]);
       } else if (msg.event === "status") {
-        term.writeln(`\r\n\x1b[1;33m● STATUS: ${msg.args[0].toUpperCase()}\x1b[0m`);
+        term.writeln(`\r\n\x1b[1;33m*** DAEMON STATUS: ${msg.args[0].toUpperCase()} ***\x1b[0m\r\n`);
       }
     };
 
     ws.onclose = () => {
-      term.writeln("\r\n\x1b[1;31m● SYSTEM: SESSION DISCONNECTED\x1b[0m");
+      term.writeln("\r\n\x1b[1;31m*** CONNECTION SEVERED: DAEMON UNREACHABLE ***\x1b[0m\r\n");
     };
 
     term.onData((data) => {
@@ -87,55 +104,47 @@ function ServerConsole() {
 
   const sendPowerAction = async (action: string) => {
     try {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        xtermRef.current?.writeln(`\r\n\x1b[1;34m> Executing lifecycle hook: ${action.toUpperCase()}\x1b[0m`);
+      }
       await apiFetch(`/api/servers/${serverId}/power`, {
         method: "POST",
         body: JSON.stringify({ action }),
       }, token);
     } catch (err: any) {
-      xtermRef.current?.writeln(`\r\n\x1b[1;31m✖ Error: ${err.message}\x1b[0m`);
+      xtermRef.current?.writeln(`\r\n\x1b[1;31mERR: SIGNAL FAILED - ${err.message}\x1b[0m`);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Power Controls - Explicit & Accessible */}
-      <div className="flex flex-wrap gap-3 p-4 bg-neutral-900/50 border border-border-subtle rounded-xl">
-        <PowerButton label="Start" variant="success" onClick={() => sendPowerAction("start")} />
-        <PowerButton label="Restart" variant="warning" onClick={() => sendPowerAction("restart")} />
-        <PowerButton label="Stop" variant="danger" onClick={() => sendPowerAction("stop")} />
-        <PowerButton label="Kill" variant="kill" onClick={() => sendPowerAction("kill")} />
+    <div className="space-y-4">
+      
+      {/* Power Controls */}
+      <div className="flex flex-wrap gap-4 text-xs font-bold pt-2">
+        <span className="text-surface2">EXEC:</span>
+        <button onClick={() => sendPowerAction("start")} className="text-green hover:underline decoration-green underline-offset-4">
+          [ START ]
+        </button>
+        <button onClick={() => sendPowerAction("restart")} className="text-yellow hover:underline decoration-yellow underline-offset-4">
+          [ RESTART ]
+        </button>
+        <button onClick={() => sendPowerAction("stop")} className="text-red hover:underline decoration-red underline-offset-4">
+          [ STOP ]
+        </button>
+        <button onClick={() => sendPowerAction("kill")} className="text-mauve hover:bg-mauve hover:text-base px-2 uppercase font-black">
+          [ KILL -9 ]
+        </button>
       </div>
 
-      {/* Terminal Shell Container */}
-      <div className="bg-black border border-border-strong rounded-xl overflow-hidden p-1 shadow-2xl h-[550px]">
-        <div className="bg-neutral-900 border-b border-border-strong px-4 py-2 flex items-center justify-between">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/40" />
-          </div>
-          <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">Interactive Shell</span>
+      {/* Embedded Terminal */}
+      <AsciiBox borderColor="border-surface2" className="p-0">
+        <div className="bg-crust border-b border-surface1 px-2 py-1 flex justify-between">
+          <span className="text-subtext0 text-xs">/dev/ttyS0</span>
+          <span className="text-surface2 text-xs">115200 8N1</span>
         </div>
-        <div ref={terminalRef} className="h-[calc(100%-40px)] w-full p-2" />
-      </div>
+        <div ref={terminalRef} className="h-[600px] w-full p-2" />
+      </AsciiBox>
+
     </div>
-  );
-}
-
-function PowerButton({ label, variant, onClick }: { label: string; variant: string; onClick: () => void }) {
-  const styles: Record<string, string> = {
-    success: "bg-green-600 hover:bg-green-500 text-white shadow-green-900/20",
-    warning: "bg-yellow-600 hover:bg-yellow-500 text-white shadow-yellow-900/20",
-    danger: "bg-red-600 hover:bg-red-500 text-white shadow-red-900/20",
-    kill: "bg-neutral-800 hover:bg-neutral-700 text-white border border-border-strong",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={`${styles[variant]} px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all duration-200 shadow-lg active:scale-95`}
-    >
-      {label}
-    </button>
   );
 }

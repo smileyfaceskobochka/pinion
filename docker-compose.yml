@@ -6,36 +6,52 @@ services:
   pinion-api:
     build:
       context: .
-      dockerfile: crates/pinion-api/Dockerfile
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       RUST_LOG: "pinion=debug,info"
-      DATABASE_URL: "postgres://pinion:pinion@postgres:5432/pinion"
-      REDIS_URL: "redis://redis:6379"
-      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET must be set}"
-      PINION_PORT: "3000"
+      PINION_DATABASE_URL: "postgres://pinion:pinion@postgres:5432/pinion"
+      PINION_REDIS_URL: "redis://redis:6379"
+      PINION_JWT_SECRET: "${PINION_JWT_SECRET:-super-secret-local-dev-key}"
+      PINION_LISTEN_ADDR: "0.0.0.0:3000"
+      PINION_DAEMON_TOKEN: "secret-daemon-token-12345"
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "3000:3000"
     networks:
       - internal
 
-  # ── Frontend (dev) ──────────────────────────────────────────────────────────
-  # In production, Caddy serves the built static files directly.
+  # ── Frontend (Production) ──────────────────────────────────────────────────
   pinion-frontend:
     build:
       context: ./frontend
-      target: dev
     restart: unless-stopped
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     ports:
-      - "5173:5173"
+      - "80:80"
     networks:
       - internal
+
+  # ── Wings Daemon ────────────────────────────────────────────────────────────
+  pinion-wings:
+    image: ghcr.io/pterodactyl/wings:latest
+    restart: always
+    networks:
+      - internal
+    ports:
+      - "8080:8080"
+      - "2022:2022"
+    tty: true
+    environment:
+      TZ: "UTC"
+      WINGS_UID: 988
+      WINGS_GID: 988
+      WINGS_USERNAME: pterodactyl
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./data/wings/lib:/var/lib/pterodactyl"
+      - "./data/wings/etc:/etc/pterodactyl"
+      - "./data/wings/tmp:/tmp/pterodactyl"
+      - "/run/pterodactyl:/run/pterodactyl"
 
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
@@ -52,6 +68,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    ports:
+      - "5432:5432"
     networks:
       - internal
 
@@ -62,6 +80,8 @@ services:
     command: redis-server --save 60 1 --loglevel warning
     volumes:
       - redisdata:/data
+    ports:
+      - "6379:6379"
     networks:
       - internal
 

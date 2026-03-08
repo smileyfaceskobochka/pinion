@@ -14,7 +14,7 @@ impl Config {
     let loader = ConfigLoader::builder()
       .add_source(File::with_name("config").required(false))
       .add_source(Environment::with_prefix("PINION"))
-      .set_default("listen_addr", "0.0.0.0:8080")?
+      .set_default("listen_addr", "0.0.0.0:3000")?
       .set_default("cors_origins", Vec::<String>::new())?
       .build()?;
 

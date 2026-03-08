@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/auth";
 import { apiFetch } from "../lib/api";
+import { AsciiBox } from "../components/AsciiBox";
 
 export const Route = createFileRoute("/auth" as any)({
   component: AuthComponent,
@@ -14,7 +15,7 @@ function AuthComponent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -24,15 +25,15 @@ function AuthComponent() {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     try {
       const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
-      const body = isLogin 
-        ? { email, password } 
+      const body = isLogin
+        ? { email, password }
         : { email, username, password };
 
       const response = await apiFetch<{ token: string }>(endpoint, {
@@ -56,101 +57,106 @@ function AuthComponent() {
   };
 
   return (
-    <div className="min-h-[85vh] flex flex-col items-center justify-center p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="w-full max-w-[420px] space-y-8">
-        {/* Branding Area */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-brand rounded-2xl shadow-xl shadow-brand/20 mb-4">
-            <span className="text-2xl font-black text-white">P</span>
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight font-display">
-            {isLogin ? "Sign in to Pinion" : "Create your account"}
-          </h1>
-          <p className="text-text-secondary text-sm font-medium">
-            {isLogin ? "Welcome back. Manage your game infrastructure." : "Get started with high-performance game hosting."}
-          </p>
+    <div className="min-h-[85vh] flex flex-col items-center justify-center p-6 text-sm">
+      <div className="w-full max-w-[500px] space-y-4">
+
+        <div className="text-center font-bold text-mauve whitespace-pre leading-none mb-6">
+          {`
+░▒▓███████▓▒░░▒▓█▓▒░▒▓███████▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓███████▓▒░  
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓███████▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+
+`}
         </div>
 
-        {/* Auth Card */}
-        <div className="card-solid p-8 shadow-2xl shadow-black/50">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <AsciiBox title="[ SYSTEM LOGIN ]" borderColor="border-surface1">
+          <div className="mb-6 space-y-1">
+            <div className="text-green">guest@pinion:~# ./authenticate --mode={isLogin ? "login" : "register"}</div>
+            <div className="text-subtext0">Initializing authentication sequence...</div>
+            <div className="text-subtext0">Targeting secure orchestration node.</div>
+            {error && <div className="text-red font-bold">ERR: {error}</div>}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">Username</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-blue font-bold">Username:</label>
+                <div className="flex items-center">
+                  <span className="text-surface2 mr-2">{">"}</span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="admin_root"
+                    className="ascii-input w-full"
+                    required
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <label className="text-blue font-bold">Email Address:</label>
+              <div className="flex items-center">
+                <span className="text-surface2 mr-2">{">"}</span>
                 <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.currentTarget.value)}
-                  placeholder="admin"
-                  className="input-field"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@pinion.local"
+                  className="ascii-input w-full"
+                  required
+                  autoFocus={isLogin}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-blue font-bold">Password:</label>
+              <div className="flex items-center">
+                <span className="text-surface2 mr-2">{">"}</span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="************"
+                  className="ascii-input w-full"
                   required
                 />
               </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.currentTarget.value)}
-                placeholder="admin@pinion.local"
-                className="input-field"
-                required
-              />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.currentTarget.value)}
-                placeholder="••••••••••••"
-                className="input-field"
-                required
-              />
+            <div className="pt-4 flex justify-between items-center border-t border-surface1 border-dashed mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError(null);
+                }}
+                className="text-subtext0 hover:text-text underline decoration-surface2 underline-offset-4"
+              >
+                [{isLogin ? "Switch to Register" : "Switch to Login"}]
+              </button>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="ascii-btn-primary font-bold"
+              >
+                {isLoading ? "EXECUTING..." : isLogin ? "LOG IN" : "REGISTER"}
+              </button>
             </div>
-
-            {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs font-bold text-center">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full btn-brand h-11 text-sm font-bold shadow-lg shadow-brand/20"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Processing...
-                </span>
-              ) : (
-                isLogin ? "Sign In" : "Register Account"
-              )}
-            </button>
           </form>
+        </AsciiBox>
 
-          {/* Toggle Area */}
-          <div className="mt-8 pt-6 border-t border-border-subtle text-center">
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-              }}
-              className="text-xs font-semibold text-text-secondary hover:text-white transition-colors uppercase tracking-widest"
-            >
-              {isLogin ? "Need an account? Register" : "Already have an account? Sign In"}
-            </button>
-          </div>
+        <div className="text-center text-subtext0 text-xs">
+          PINION ORCHESTRATION {">"} CLI INTERFACE
         </div>
-        
-        <p className="text-center text-xs text-text-tertiary">
-          Secure, low-latency, distributed game server orchestration.
-        </p>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ mod routes;
 mod state;
 
 use crate::config::Config;
-use crate::routes::{allocations, auth, eggs, files, nodes, servers, users, ws};
+use crate::routes::{allocations, auth, eggs, files, nodes, remote, servers, users, ws};
 use crate::state::AppState;
 
 #[tokio::main]
@@ -64,8 +64,13 @@ async fn main() -> anyhow::Result<()> {
     .route("/api/servers/{id}/files", get(files::list_files))
     .route("/api/servers/{id}/files/content", get(files::read_file).post(files::write_file))
     .route("/api/eggs", get(eggs::list_eggs).post(eggs::upsert_egg))
+    .route("/api/remote/servers", get(remote::list_remote_servers))
+    .route("/api/remote/servers/reset", post(remote::reset_servers_state))
+    .route("/api/remote/servers/{uuid}", get(remote::get_remote_server))
+    .route("/api/remote/activity", post(remote::send_activity_logs))
     .layer(cors)
     .layer(TraceLayer::new_for_http())
+    .fallback(handle_404)
     .with_state(state);
 
   // 7. Start the server
@@ -74,4 +79,9 @@ async fn main() -> anyhow::Result<()> {
   axum::serve(listener, app).await?;
 
   Ok(())
+}
+
+async fn handle_404(req: axum::http::Request<axum::body::Body>) -> impl axum::response::IntoResponse {
+  tracing::warn!("404 NOT FOUND: {} {}", req.method(), req.uri());
+  axum::http::StatusCode::NOT_FOUND
 }
