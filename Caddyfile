@@ -1,0 +1,32 @@
+# Pinion — local homelab Caddyfile
+# Replace pinion.local with your actual domain or mDNS hostname.
+
+pinion.local {
+    # ── API (Axum backend) ────────────────────────────────────────────────
+    handle /api/* {
+        reverse_proxy pinion-api:3000
+    }
+
+    # ── WebSocket proxy (console, stats) ─────────────────────────────────
+    handle /ws/* {
+        reverse_proxy pinion-api:3000 {
+            # Required for WS upgrade
+            header_up Connection "Upgrade"
+            header_up Upgrade "websocket"
+        }
+    }
+
+    # ── Frontend (SPA) ───────────────────────────────────────────────────
+    handle {
+        # Production: serve pre-built static files
+        # root * /srv/pinion/dist
+        # try_files {path} /index.html
+        # file_server
+
+        # Dev: proxy to Vite dev server
+        reverse_proxy pinion-frontend:5173
+    }
+
+    # ── TLS: auto-HTTPS via Caddy's internal CA for .local domains ───────
+    tls internal
+}

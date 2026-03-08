@@ -1,0 +1,24 @@
+[package]
+name = "pinion-wings"
+description = "Wings daemon REST + WebSocket client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+pinion-core = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+reqwest = { workspace = true }
+axum = { workspace = true }
+tokio-tungstenite = { workspace = true }
+jsonwebtoken = { workspace = true }
+futures-util = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+time = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }

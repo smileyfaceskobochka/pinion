@@ -1,0 +1,74 @@
+name: pinion
+
+services:
+
+  # ── Pinion API ──────────────────────────────────────────────────────────────
+  pinion-api:
+    build:
+      context: .
+      dockerfile: crates/pinion-api/Dockerfile
+    restart: unless-stopped
+    environment:
+      RUST_LOG: "pinion=debug,info"
+      DATABASE_URL: "postgres://pinion:pinion@postgres:5432/pinion"
+      REDIS_URL: "redis://redis:6379"
+      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET must be set}"
+      PINION_PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - internal
+
+  # ── Frontend (dev) ──────────────────────────────────────────────────────────
+  # In production, Caddy serves the built static files directly.
+  pinion-frontend:
+    build:
+      context: ./frontend
+      target: dev
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - internal
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       pinion
+      POSTGRES_USER:     pinion
+      POSTGRES_PASSWORD: pinion
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pinion"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redisdata:/data
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
