@@ -1,13 +1,9 @@
 :80 {
     root * /usr/share/caddy
 
-    # API Reverse Proxy
-    # We use handle to ensure /api* doesn't fall through to SPA logic
     handle /api* {
         reverse_proxy pinion-api:3000
     }
-
-    # Frontend SPA Routing
     handle {
         try_files {path} /index.html
         file_server

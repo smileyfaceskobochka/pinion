@@ -80,16 +80,16 @@ anyhow = "1"
 # Config
 config = { version = "0.15.19", features = ["toml"] }
 
-# --- Logging / tracing ---
+# Logging / tracing
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
-# --- Async ---
+# Async
 futures-util = "0.3"
 
-# --- Misc ---
+# Misc
 bitflags = { version = "2", features = ["serde"] }
-bon = "3.9.0"                                      # ergonomic builder macros
+bon = "3.9.0"
 
 [profile.release]
 opt-level = 3
