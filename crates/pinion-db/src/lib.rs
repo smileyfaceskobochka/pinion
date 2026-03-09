@@ -1,5 +1,5 @@
-use sqlx::postgres::PgPoolOptions;
 pub use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 
 pub mod repos;
 

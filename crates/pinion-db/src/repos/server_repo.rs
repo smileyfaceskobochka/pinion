@@ -1,6 +1,6 @@
 use pinion_core::error::PinionResult;
 use pinion_core::models::{Server, ServerLimits, ServerState};
-use sqlx::{types::Json, Executor, Postgres, Row};
+use sqlx::{Executor, Postgres, Row, types::Json};
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -21,7 +21,7 @@ impl ServerRepo {
         return Err(pinion_core::error::PinionError::Internal(format!(
           "Invalid ServerState: {}",
           status_str
-        )))
+        )));
       }
     };
 

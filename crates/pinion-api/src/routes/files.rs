@@ -2,8 +2,8 @@ use crate::error::{ApiError, ApiResult};
 use crate::middleware::auth::AuthUser;
 use crate::state::AppState;
 use axum::{
-  extract::{Path, Query, State},
   Json,
+  extract::{Path, Query, State},
 };
 use pinion_db::repos::{NodeRepo, ServerRepo};
 use pinion_wings::WingsClient;

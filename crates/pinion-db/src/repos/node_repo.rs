@@ -27,7 +27,7 @@ impl NodeRepo {
         return Err(pinion_core::error::PinionError::Internal(format!(
           "Invalid NodeScheme: {}",
           scheme_str
-        )))
+        )));
       }
     };
 
@@ -110,7 +110,7 @@ impl NodeRepo {
           return Err(pinion_core::error::PinionError::Internal(format!(
             "Invalid NodeScheme: {}",
             scheme_str
-          )))
+          )));
         }
       };
 

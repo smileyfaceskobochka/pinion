@@ -1,4 +1,4 @@
 /target
 Cargo.lock
-wings
-seed.sh
+/wings
+/data

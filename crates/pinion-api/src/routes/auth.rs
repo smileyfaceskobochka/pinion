@@ -2,11 +2,11 @@ use crate::error::{ApiError, ApiResult};
 use crate::middleware::auth::Claims;
 use crate::state::AppState;
 use argon2::{
-  password_hash::{PasswordHash, PasswordVerifier},
   Argon2,
+  password_hash::{PasswordHash, PasswordVerifier},
 };
-use axum::{extract::State, Json};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use axum::{Json, extract::State};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use pinion_db::repos::UserRepo;
 use serde::{Deserialize, Serialize};
 
@@ -79,7 +79,8 @@ pub async fn register(
   let is_first_user = user_count == 0;
 
   let user =
-    UserRepo::create(&state.pool, &payload.email, &payload.username, &password_hash, is_first_user).await?;
+    UserRepo::create(&state.pool, &payload.email, &payload.username, &password_hash, is_first_user)
+      .await?;
 
   // Log them in immediately
   let now = time::OffsetDateTime::now_utc().unix_timestamp();

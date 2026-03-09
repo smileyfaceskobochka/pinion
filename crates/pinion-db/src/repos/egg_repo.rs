@@ -36,7 +36,7 @@ impl EggRepo {
     E: Executor<'a, Database = Postgres>,
   {
     let row = sqlx::query(
-            "INSERT INTO eggs (id, name, author, description, docker_image, startup, config, variables) 
+      "INSERT INTO eggs (id, name, author, description, docker_image, startup, config, variables) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
              ON CONFLICT (id) DO UPDATE SET 
                 name = EXCLUDED.name,
@@ -46,19 +46,19 @@ impl EggRepo {
                 startup = EXCLUDED.startup,
                 config = EXCLUDED.config,
                 variables = EXCLUDED.variables
-             RETURNING id, name, author, description, docker_image, startup, config, variables"
-        )
-        .bind(egg.id)
-        .bind(&egg.name)
-        .bind(&egg.author)
-        .bind(&egg.description)
-        .bind(&egg.docker_image)
-        .bind(&egg.startup)
-        .bind(&egg.config)
-        .bind(&egg.variables)
-        .fetch_one(executor)
-        .await
-        .map_err(|e| pinion_core::error::PinionError::Database(e.to_string()))?;
+             RETURNING id, name, author, description, docker_image, startup, config, variables",
+    )
+    .bind(egg.id)
+    .bind(&egg.name)
+    .bind(&egg.author)
+    .bind(&egg.description)
+    .bind(&egg.docker_image)
+    .bind(&egg.startup)
+    .bind(&egg.config)
+    .bind(&egg.variables)
+    .fetch_one(executor)
+    .await
+    .map_err(|e| pinion_core::error::PinionError::Database(e.to_string()))?;
 
     Ok(Egg {
       id: row.get("id"),
@@ -77,11 +77,11 @@ impl EggRepo {
     E: Executor<'a, Database = Postgres>,
   {
     let rows = sqlx::query(
-            "SELECT id, name, author, description, docker_image, startup, config, variables FROM eggs",
-        )
-        .fetch_all(executor)
-        .await
-        .map_err(|e| pinion_core::error::PinionError::Database(e.to_string()))?;
+      "SELECT id, name, author, description, docker_image, startup, config, variables FROM eggs",
+    )
+    .fetch_all(executor)
+    .await
+    .map_err(|e| pinion_core::error::PinionError::Database(e.to_string()))?;
 
     Ok(
       rows

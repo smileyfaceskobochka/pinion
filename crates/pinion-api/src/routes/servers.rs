@@ -2,8 +2,8 @@ use crate::error::{ApiError, ApiResult};
 use crate::middleware::auth::AuthUser;
 use crate::state::AppState;
 use axum::{
-  extract::{Path, State},
   Json,
+  extract::{Path, State},
 };
 use pinion_core::models::{Server, ServerLimits};
 use pinion_db::repos::{AllocationRepo, EggRepo, NodeRepo, ServerRepo};
@@ -45,21 +45,21 @@ pub async fn create_server(
     return Err(ApiError::Forbidden);
   }
 
-  // 1. Start transaction
+  // Start transaction
   let mut tx = state
     .pool
     .begin()
     .await
     .map_err(|e| ApiError::Internal(format!("Failed to start transaction: {}", e)))?;
 
-  // 2. Find available allocation (uses FOR UPDATE within transaction)
+  // Find available allocation (uses FOR UPDATE within transaction)
   let allocation = AllocationRepo::find_available(&mut *tx, payload.node_id).await?;
 
-  // 3. Load node and egg for Wings config
+  // Load node and egg for Wings config
   let node = NodeRepo::find_by_id(&mut *tx, payload.node_id).await?;
   let _egg = EggRepo::find_by_id(&mut *tx, payload.egg_id).await?;
 
-  // 4. Create server record (within transaction)
+  // Create server record
   let server = ServerRepo::create(
     &mut *tx,
     &payload.name,
@@ -73,23 +73,26 @@ pub async fn create_server(
   )
   .await?;
 
-  // 5. Assign allocation
+  // Assign allocation
   AllocationRepo::assign(&mut *tx, allocation.id, server.id).await?;
 
-  // 6. Commit transaction BEFORE Wings call so Wings can see the server
+  // Commit transaction BEFORE Wings call so Wings can see the server
   tx.commit().await.map_err(|e| ApiError::Internal(e.to_string()))?;
 
-  // 7. Wings API call
+  // Wings API call
   let wings = WingsClient::from_node(&node);
 
   match wings.create_server(server.id, true).await {
-    Ok(_) => {
-      Ok(Json(server))
-    }
+    Ok(_) => Ok(Json(server)),
     Err(e) => {
       tracing::error!("Wings failed to create server: {:?}", e);
       // Update status to InstallFailed
-      let _ = ServerRepo::update_status(&state.pool, server.id, pinion_core::models::ServerState::InstallFailed).await;
+      let _ = ServerRepo::update_status(
+        &state.pool,
+        server.id,
+        pinion_core::models::ServerState::InstallFailed,
+      )
+      .await;
       Err(e.into())
     }
   }
@@ -101,7 +104,7 @@ pub async fn set_power(
   Path(id): Path<Uuid>,
   Json(payload): Json<HashMap<String, String>>,
 ) -> ApiResult<()> {
-  // 1. Load server and verify permissions
+  // Load server and verify permissions
   let server = ServerRepo::find_by_id(&state.pool, id).await?;
 
   // Authorization check
@@ -119,10 +122,10 @@ pub async fn set_power(
     _ => return Err(ApiError::BadRequest("Invalid power action".to_string())),
   };
 
-  // 2. Load node
+  // Load node
   let node = NodeRepo::find_by_id(&state.pool, server.node_id).await?;
 
-  // 3. Call Wings
+  // Call Wings
   let wings = WingsClient::from_node(&node);
   wings.set_power(server.id, action).await.map_err(ApiError::from)?;
 

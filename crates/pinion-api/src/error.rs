@@ -1,7 +1,7 @@
 use axum::{
+  Json,
   http::StatusCode,
   response::{IntoResponse, Response},
-  Json,
 };
 use pinion_core::error::PinionError;
 use pinion_wings::error::WingsError;

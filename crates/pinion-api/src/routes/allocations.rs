@@ -2,8 +2,8 @@ use crate::error::{ApiError, ApiResult};
 use crate::middleware::auth::AuthUser;
 use crate::state::AppState;
 use axum::{
-  extract::{Path, State},
   Json,
+  extract::{Path, State},
 };
 use pinion_core::models::Allocation;
 use pinion_db::repos::AllocationRepo;

@@ -1,6 +1,6 @@
 use crate::error::ApiResult;
 use crate::state::AppState;
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use pinion_db::repos::{AllocationRepo, EggRepo, ServerRepo};
 use pinion_wings::types::{
   ProcessConfiguration, StartupConfiguration, StopConfiguration, WingsAllocation,
@@ -16,7 +16,9 @@ pub struct RemoteServersResponse {
   pub data: Vec<WingsServerConfigurationResponse>,
 }
 
-pub async fn list_remote_servers(State(state): State<AppState>) -> ApiResult<Json<RemoteServersResponse>> {
+pub async fn list_remote_servers(
+  State(state): State<AppState>,
+) -> ApiResult<Json<RemoteServersResponse>> {
   let servers = ServerRepo::list(&state.pool, 1000, 0).await?;
   let mut data = Vec::new();
 
@@ -27,11 +29,18 @@ pub async fn list_remote_servers(State(state): State<AppState>) -> ApiResult<Jso
     data.push(WingsServerConfigurationResponse {
       settings: WingsSettings {
         uuid: server.id,
-        meta: WingsMeta { name: server.name.clone(), description: server.description.clone().unwrap_or_default() },
+        meta: WingsMeta {
+          name: server.name.clone(),
+          description: server.description.clone().unwrap_or_default(),
+        },
         suspended: false,
         invocation: egg.startup.clone(),
         skip_scripts: false,
-        environment: server.environment.iter().map(|(k, v)| (k.clone(), serde_json::Value::String(v.clone()))).collect(),
+        environment: server
+          .environment
+          .iter()
+          .map(|(k, v)| (k.clone(), serde_json::Value::String(v.clone())))
+          .collect(),
         labels: HashMap::new(),
         allocations: WingsAllocationConfig {
           force_outgoing_ip: false,
@@ -48,7 +57,11 @@ pub async fn list_remote_servers(State(state): State<AppState>) -> ApiResult<Jso
           io_weight: server.limits.io as u16,
           cpu_limit: server.limits.cpu,
           disk_space: server.limits.disk,
-          threads: if server.limits.threads > 0 { Some(server.limits.threads.to_string()) } else { None },
+          threads: if server.limits.threads > 0 {
+            Some(server.limits.threads.to_string())
+          } else {
+            None
+          },
           oom_killer: true,
         },
         egg: WingsEggConfig {
@@ -94,11 +107,18 @@ pub async fn get_remote_server(
   Ok(Json(WingsServerConfigurationResponse {
     settings: WingsSettings {
       uuid: server.id,
-      meta: WingsMeta { name: server.name.clone(), description: server.description.clone().unwrap_or_default() },
+      meta: WingsMeta {
+        name: server.name.clone(),
+        description: server.description.clone().unwrap_or_default(),
+      },
       suspended: false,
       invocation: egg.startup.clone(),
       skip_scripts: false,
-      environment: server.environment.iter().map(|(k, v)| (k.clone(), serde_json::Value::String(v.clone()))).collect(),
+      environment: server
+        .environment
+        .iter()
+        .map(|(k, v)| (k.clone(), serde_json::Value::String(v.clone())))
+        .collect(),
       labels: HashMap::new(),
       allocations: WingsAllocationConfig {
         force_outgoing_ip: false,
@@ -115,7 +135,11 @@ pub async fn get_remote_server(
         io_weight: server.limits.io as u16,
         cpu_limit: server.limits.cpu,
         disk_space: server.limits.disk,
-        threads: if server.limits.threads > 0 { Some(server.limits.threads.to_string()) } else { None },
+        threads: if server.limits.threads > 0 {
+          Some(server.limits.threads.to_string())
+        } else {
+          None
+        },
         oom_killer: true,
       },
       egg: WingsEggConfig {

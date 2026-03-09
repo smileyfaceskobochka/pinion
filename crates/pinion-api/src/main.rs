@@ -1,6 +1,6 @@
 use axum::{
-  routing::{delete, get, post},
   Router,
+  routing::{delete, get, post},
 };
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
@@ -19,7 +19,7 @@ use crate::state::AppState;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // 1. Initialize tracing
+  // Initialize tracing
   tracing_subscriber::registry()
     .with(
       tracing_subscriber::EnvFilter::try_from_default_env()
@@ -28,28 +28,28 @@ async fn main() -> anyhow::Result<()> {
     .with(tracing_subscriber::fmt::layer())
     .init();
 
-  // 2. Load configuration
+  // Load conf
   let config = Config::load().expect("Failed to load configuration");
   let listen_addr = config.listen_addr.parse::<SocketAddr>()?;
 
-  // 3. Connect to database
+  // Connect to db
   let pool = pinion_db::connect(&config.database_url).await?;
 
-  // 4. Initialize application state
+  // Initialize AppState
   let state = AppState::new(pool, config.clone());
 
-  // 5. Setup CORS
+  // Setup CORS
   let cors = CorsLayer::new()
     .allow_origin(if config.cors_origins.is_empty() {
       Any
     } else {
-      // Need to map Vec<String> to origins, but Any is safer for homelab dev
+      // Need to map Vec<String> to origins, but for now it's ok
       Any
     })
     .allow_methods(Any)
     .allow_headers(Any);
 
-  // 6. Build the router
+  // Build the router
   let app = Router::new()
     .route("/api/auth/login", post(auth::login))
     .route("/api/auth/register", post(auth::register))
@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
     .fallback(handle_404)
     .with_state(state);
 
-  // 7. Start the server
+  // Start server
   tracing::info!("Pinion API listening on {}", listen_addr);
   let listener = tokio::net::TcpListener::bind(listen_addr).await?;
   axum::serve(listener, app).await?;
@@ -81,7 +81,9 @@ async fn main() -> anyhow::Result<()> {
   Ok(())
 }
 
-async fn handle_404(req: axum::http::Request<axum::body::Body>) -> impl axum::response::IntoResponse {
+async fn handle_404(
+  req: axum::http::Request<axum::body::Body>,
+) -> impl axum::response::IntoResponse {
   tracing::warn!("404 NOT FOUND: {} {}", req.method(), req.uri());
   axum::http::StatusCode::NOT_FOUND
 }

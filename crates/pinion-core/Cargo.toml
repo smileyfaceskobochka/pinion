@@ -1,6 +1,6 @@
 [package]
 name = "pinion-core"
-description = "Domain types and business logic — no I/O"
+description = "Domain types and business logic — no io"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,5 +1,5 @@
 use crate::error::WingsError;
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
 use time;
 use uuid::Uuid;

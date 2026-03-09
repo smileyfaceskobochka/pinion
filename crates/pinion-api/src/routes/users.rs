@@ -1,7 +1,7 @@
 use crate::error::{ApiError, ApiResult};
 use crate::middleware::auth::AuthUser;
 use crate::state::AppState;
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use pinion_core::models::User;
 use pinion_db::repos::UserRepo;
 use serde::Deserialize;

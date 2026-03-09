@@ -1,15 +1,15 @@
 use crate::error::ApiError;
 use crate::state::AppState;
 use axum::{
+  RequestPartsExt,
   extract::{FromRef, FromRequestParts},
   http::request::Parts,
-  RequestPartsExt,
 };
 use axum_extra::{
-  headers::{authorization::Bearer, Authorization},
   TypedHeader,
+  headers::{Authorization, authorization::Bearer},
 };
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
